@@ -16,6 +16,7 @@ fi
 disk_image_orig="$1"
 disk_image=eurocloud-"$disk_image_orig"
 
+# TODO: only works on BTRFS
 cp -avx --sparse=auto --reflink=always "$disk_image_orig" "$disk_image"
 
 echo Look for duplicates here: 
