@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Designed for Ubuntu 16.10, please ensure qemu-kvm, libguestfs-tools and qemu-tools packages are installed.
+
+set -e
+set -x
+
+# Get latest image
+wget -c http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz
+unxz -fk CentOS-7-x86_64-GenericCloud.qcow2.xz
+
+# Prepare output disk
+fallocate -l 108G outdisk.raw
+
+# Dump CentOS image into new image and mount into NBD
+virt-resize -v -x CentOS-7-x86_64-GenericCloud.qcow2 outdisk.raw
+modprobe nbd max_part=8
+qemu-nbd -c /dev/nbd0 -f raw outdisk.raw
+
+# move centos root partition to the end of the disk
+sfdisk --delete /dev/nbd0 2
+echo '+100G,' | sfdisk --move-data /dev/nbd0 -N 1
+echo '2048,' | sfdisk /dev/nbd0 --append
+pvcreate -f /dev/nbd0p2
+
+# Free resources
+qemu-nbd --disconnect /dev/nbd0
+rmmod nbd
+
+# Convert into qcow2
+time qemu-img convert -c -f raw -O qcow2 -o outdisk.raw outdisk.qcow2
