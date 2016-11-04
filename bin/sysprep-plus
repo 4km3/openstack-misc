@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -x
+
+progname=$(basename $0)
+
+usage () {
+	echo $progname some_image.qcow2
+}
+
+if [ "$#" -ne 1 ]; then
+	usage
+	exit 1
+fi
+
+disk_image_orig="$1"
+disk_image=eurocloud-"$disk_image_orig"
+
+cp -avx --sparse=auto --reflink=always "$disk_image_orig" "$disk_image"
+
+echo Look for duplicates here: 
+echo before:
+virt-cat -a "$disk_image" /etc/sysconfig/network && EDITOR='vim -e +"%!sort -u" +wq' virt-edit -a "$disk_image" /etc/sysconfig/network
+echo after:
+virt-cat -a "$disk_image" /etc/sysconfig/network
+
+EDITOR='sed -i /UseDNS/d'       virt-edit -a "$disk_image" /etc/ssh/sshd_config
+EDITOR='sed -i "\$aUseDNS no"'  virt-edit -a "$disk_image" /etc/ssh/sshd_config
+
+guestfish -a "$disk_image" -i \
+	write /etc/cloud/cloud.cfg.d/10_manage_etc_hosts.cfg "manage_etc_hosts: True" : \
+	rm-rf /var/lib/cloud/
+
+virt-sysprep -a "$disk_image"
+virt-sparsify --in-place "$disk_image"
+qemu-img convert -c -f qcow2 -O qcow2 -o compat=0.10 "$disk_image" "$disk_image"c
+rm -fv "$disk_image"
