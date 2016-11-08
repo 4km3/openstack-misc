@@ -34,5 +34,5 @@ guestfish -a "$disk_image" -i \
 
 virt-sysprep -a "$disk_image"
 virt-sparsify --in-place "$disk_image"
-qemu-img convert -c -f qcow2 -O qcow2 -o compat=0.10 "$disk_image" "$disk_image"c
+qemu-img convert -c -f qcow2 -O qcow2 "$disk_image" "$disk_image"c
 rm -fv "$disk_image"
