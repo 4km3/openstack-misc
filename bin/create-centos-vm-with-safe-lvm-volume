@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# Designed for Ubuntu 16.10, please ensure qemu-kvm, libguestfs-tools and qemu-tools packages are installed.
+# Designed for Ubuntu 16.10, please ensure these packages are installed:
+# sudo apt install qemu-kvm libguestfs-tools qemu-utils
 
 set -e
 set -x
